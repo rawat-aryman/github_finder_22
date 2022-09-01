@@ -10,7 +10,9 @@ export const GithubProvider = ({children}) => {
     // const [loading , setLoading] = useState(true);
     const initialState = {
         users: [],
-        loading: false
+        user: {},
+        repos : [],
+        loading: false,
     }
 
     const [state,dispatch] = useReducer(GithubReducer, initialState);
@@ -40,6 +42,61 @@ export const GithubProvider = ({children}) => {
 
     } 
 
+
+    // use to display user 
+    const getUser = async (login) => {
+        setLoading();
+
+        // var originalName = text.split(' ').join('');
+        const response = await fetch(`${GITHUB_URL}/users/${login}` , {
+            headers : {
+                Authorization : `token ${GITHUB_TOKEN}`
+            }
+        })
+
+        if(response.status === 404){
+            window.location = '/notfound';
+        }else{
+        
+            const data = await response.json();
+    
+            dispatch({
+                type: 'GET_USER',
+                payload: data,
+            })
+        }
+
+
+
+    } 
+
+
+    // to get user repos
+    const getUserRepos = async (login) => {
+        setLoading();
+
+        const params = new URLSearchParams({
+            sort : 'created',
+            per_page : 10,
+        });
+        // var originalName = text.split(' ').join('');
+        const response = await fetch(`${GITHUB_URL}/users/${login}/repos` , {
+            headers : {
+                Authorization : `token ${GITHUB_TOKEN}`
+            }
+        })
+
+        const data = await response.json();
+        
+        // console.log(items);
+
+        dispatch({
+            type: 'GET_REPOS',
+            payload: data
+        })
+
+    }
+
     const setLoading = () => {
         dispatch({
             type: 'SET_LOADING',
@@ -54,9 +111,13 @@ export const GithubProvider = ({children}) => {
 
     return <GithubContext.Provider value={{
         users: state.users,
-        loading: state.loading  ,
+        user: state.user,
+        loading: state.loading,
+        repos: state.repos,
         searchUsers,
-        clearUsers
+        clearUsers,
+        getUser,
+        getUserRepos
     }}>
         {children}
     </GithubContext.Provider>
